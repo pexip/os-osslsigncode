@@ -1,0 +1,24 @@
+Source: osslsigncode
+Maintainer: Stephen Kitt <skitt@debian.org>
+Section: otherosfs
+Priority: optional
+Build-Depends: debhelper-compat (= 13),
+               libcurl4-gnutls-dev,
+               libgsf-1-dev,
+               libssl-dev
+Standards-Version: 4.5.0
+Vcs-Browser: https://salsa.debian.org/debian/osslsigncode
+Vcs-Git: https://salsa.debian.org/debian/osslsigncode.git
+Homepage: https://github.com/mtrojnar/osslsigncode
+Rules-Requires-Root: no
+
+Package: osslsigncode
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+Description: Authenticode signing tool
+ osslsigncode is an Authenticode signing tool for PE binaries
+ (Windows executables, DLLs, drivers...), CAB archives and MSI
+ installation packages. It also supports timestamping using
+ Authenticode and RFC-3161.
