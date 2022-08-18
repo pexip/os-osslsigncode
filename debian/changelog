@@ -1,8 +1,9 @@
 osslsigncode (2.1-1pexip1) pexip; urgency=medium
 
   * Prepare Pexip packaging
+  * Add ability to read passphrase from stdin, using "-readpass -"
 
- -- Steve McIntyre <steve.mcintyre@pexip.com>  Thu, 18 Aug 2022 15:42:22 +0000
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Thu, 18 Aug 2022 16:42:22 +0100
 
 osslsigncode (2.1-1) unstable; urgency=low
 
