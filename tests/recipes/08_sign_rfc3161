@@ -1,0 +1,68 @@
+#!/bin/sh
+# Sign a PE/CAB/MSI file with RFC 3161 timestamping
+# An RFC3161 timestamp server provides an essential function in protecting
+# data records for the long-term. It provides proof that the data existed
+# at a particular moment in time and that it has not changed, even by
+# a single binary bit, since it was notarized and time-stamped.
+
+. $(dirname $0)/../test_library
+script_path=$(pwd)
+
+# PE file
+test_name="081. Sign a PE file with RFC 3161 timestamping"
+printf "\n%s\n" "$test_name"
+if test -s "test.exe" && ! grep -q "no libcurl available" "results.log"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/key.pem" \
+        -ts http://time.certum.pl/ \
+        -ts http://timestamp.digicert.com/ \
+        -verbose \
+        -in "test.exe" -out "test_081.exe"
+    verify_signature "$?" "081" "exe" "success" "@2019-09-01 12:00:00" \
+	"UNUSED_PATTERN" "ASCII" "Timestamp Server Signature" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+# CAB file
+test_name="082. Sign a CAB file with RFC 3161 timestamping"
+printf "\n%s\n" "$test_name"
+if test -s "test.ex_" && ! grep -q "no libcurl available" "results.log"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/key.pem" \
+        -ts http://time.certum.pl/ \
+        -ts http://timestamp.digicert.com/ \
+        -verbose \
+        -in "test.ex_" -out "test_082.ex_"
+    verify_signature "$?" "082" "ex_" "success" "@2019-09-01 12:00:00" \
+	"UNUSED_PATTERN" "ASCII" "Timestamp Server Signature" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+# MSI file
+test_name="083. Sign a MSI file with RFC 3161 timestamping"
+printf "\n%s\n" "$test_name"
+if test -s "sample.msi" && ! grep -q "no libcurl available" "results.log"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/key.pem" \
+        -ts http://time.certum.pl/ \
+        -ts http://timestamp.digicert.com/ \
+        -verbose \
+        -in "sample.msi" -out "test_083.msi"
+    verify_signature "$?" "083" "msi" "success" "@2019-09-01 12:00:00" \
+	"UNUSED_PATTERN" "ASCII" "Timestamp Server Signature" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+exit 0

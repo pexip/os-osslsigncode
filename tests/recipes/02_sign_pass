@@ -1,0 +1,58 @@
+#!/bin/sh
+# Sign a PE/CAB/MSI file with the encrypted private key file in the PEM format.
+
+. $(dirname $0)/../test_library
+script_path=$(pwd)
+
+# PE file
+test_name="021. Sign a PE file with the encrypted private key file in the PEM format"
+printf "\n%s\n" "$test_name"
+if test -s "test.exe"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/keyp.pem" \
+        -pass passme \
+        -in "test.exe" -out "test_021.exe"
+    verify_signature "$?" "021" "exe" "success" "@2019-09-01 12:00:00" \
+	"sha256sum" "ASCII" "osslsigncode" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+# CAB file
+test_name="022. Sign a CAB file with the encrypted private key file in the PEM format"
+printf "\n%s\n" "$test_name"
+if test -s "test.ex_"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/keyp.pem" \
+        -pass passme \
+        -in "test.ex_" -out "test_022.ex_"
+    verify_signature "$?" "022" "ex_" "success" "@2019-09-01 12:00:00" \
+	"sha256sum" "ASCII" "osslsigncode" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+# MSI file
+test_name="023. Sign a MSI file with the encrypted private key file in the PEM format"
+printf "\n%s\n" "$test_name"
+if test -s "sample.msi"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/keyp.pem" \
+        -pass passme \
+        -in "sample.msi" -out "test_023.msi"
+    verify_signature "$?" "023" "msi" "success" "@2019-09-01 12:00:00" \
+	"sha256sum" "ASCII" "osslsigncode" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+exit 0

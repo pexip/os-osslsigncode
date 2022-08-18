@@ -1,0 +1,27 @@
+#!/bin/sh
+# Signing a PE file with SHA1 set of cryptographic hash functions.
+
+. $(dirname $0)/../test_library
+script_path=$(pwd)
+
+# PE file
+test_name="231. Signing a PE file with SHA1 set of cryptographic hash functions"
+printf "\n%s\n" "$test_name"
+if test -s "test.exe"
+  then
+    ../../osslsigncode sign -h sha2 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/key.pem" \
+        -in "test.exe" -out "test_231.exe"
+    verify_signature "$?" "231" "exe" "success" "@2019-09-01 12:00:00" \
+	"UNUSED_PATTERN" "ASCII" "SHA2" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+# CAB file
+
+# MSI file
+
+exit 0

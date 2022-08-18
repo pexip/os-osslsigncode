@@ -1,0 +1,64 @@
+#!/bin/sh
+# Sign a PE/CAB/MSI file with Authenticode timestamping
+
+. $(dirname $0)/../test_library
+script_path=$(pwd)
+
+# PE file
+test_name="071. Sign a PE file with Authenticode timestamping"
+printf "\n%s\n" "$test_name"
+if test -s "test.exe" && ! grep -q "no libcurl available" "results.log"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/key.pem" \
+        -t http://time.certum.pl/ \
+        -t http://timestamp.digicert.com/ \
+        -verbose \
+        -in "test.exe" -out "test_071.exe" 2>> "results.log" 1>&2
+    verify_signature "$?" "071" "exe" "success" "@2019-09-01 12:00:00" \
+	"UNUSED_PATTERN" "ASCII" "Timestamp Server Signature" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+# CAB file
+test_name="072. Sign a CAB file with Authenticode timestamping"
+printf "\n%s\n" "$test_name"
+if test -s "test.ex_" && ! grep -q "no libcurl available" "results.log"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/key.pem" \
+        -t http://time.certum.pl/ \
+        -t http://timestamp.digicert.com/ \
+        -verbose \
+        -in "test.ex_" -out "test_072.ex_" 2>> "results.log" 1>&2
+    verify_signature "$?" "072" "ex_" "success" "@2019-09-01 12:00:00" \
+	"UNUSED_PATTERN" "ASCII" "Timestamp Server Signature" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+# MSI file
+test_name="073. Sign a MSI file with Authenticode timestamping"
+printf "\n%s\n" "$test_name"
+if test -s "sample.msi" && ! grep -q "no libcurl available" "results.log"
+  then
+    ../../osslsigncode sign -h sha256 \
+        -st "1556668800" \
+        -certs "${script_path}/../certs/cert.pem" -key "${script_path}/../certs/key.pem" \
+        -t http://time.certum.pl/ \
+        -t http://timestamp.digicert.com/ \
+        -verbose \
+        -in "sample.msi" -out "test_073.msi"
+    verify_signature "$?" "073" "msi" "success" "@2019-09-01 12:00:00" \
+	"UNUSED_PATTERN" "ASCII" "Timestamp Server Signature" "UNUSED_PATTERN"
+    test_result "$?" "$test_name"
+  else
+    printf "Test skipped\n"
+  fi
+
+exit 0
