@@ -1,5 +1,6 @@
 Source: osslsigncode
-Maintainer: Stephen Kitt <skitt@debian.org>
+Maintainer: Pexip AS <packaging@pexip.com>
+XSBC-Pexip-Original-Maintainer: Stephen Kitt <skitt@debian.org>
 Section: otherosfs
 Priority: optional
 Build-Depends: debhelper-compat (= 13),
@@ -11,6 +12,7 @@ Vcs-Browser: https://salsa.debian.org/debian/osslsigncode
 Vcs-Git: https://salsa.debian.org/debian/osslsigncode.git
 Homepage: https://github.com/mtrojnar/osslsigncode
 Rules-Requires-Root: no
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ bullseye
 
 Package: osslsigncode
 Architecture: any
