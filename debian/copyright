@@ -1,10 +1,10 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: osslsigncode
-Source: https://sourceforge.net/projects/osslsigncode/
+Source: https://github.com/mtrojnar/osslsigncode/
 
 Files:     *
 Copyright: 2005-2014 Per Allansson <pallansson@gmail.com>
-           2018-2020 Michał Trojnara
+           2018-2022 Michał Trojnara <Michal.Trojnara@stunnel.org>
 License:   GPL-3.0+~OpenSSL
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ License:   GPL-3.0+~OpenSSL
  Version 3 can be found in `/usr/share/common-licenses/GPL-3'.
 
 Files:     debian/*
-Copyright: 2015-2018, 2020 Stephen Kitt <skitt@debian.org>
+Copyright: 2015-2018, 2020-2023 Stephen Kitt <skitt@debian.org>
 License:   GPL-3.0+
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by

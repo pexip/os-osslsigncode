@@ -1,4 +1,4 @@
 version=4
-opts="filenamemangle=s%(?:.*?)?v?(\d[\d.]*)\.tar\.gz%osslsigncode-$1.tar.gz%" \
-    https://github.com/mtrojnar/osslsigncode/tags \
-    (?:.*?/)?v?(\d[\d.]*)\.tar\.gz debian uupdate
+opts="pgpmode=auto" \
+    https://github.com/mtrojnar/osslsigncode/releases \
+    (?:.*?/)?@PACKAGE@-(\d[\d.]*)\.tar\.gz debian uupdate

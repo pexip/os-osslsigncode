@@ -1,0 +1,4 @@
+timestamp-query.patch
+big-little-endian.patch
+legacy-pkcs12-support.patch
+legacy-pkcs12-tests.patch

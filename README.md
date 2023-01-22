@@ -1,6 +1,10 @@
 osslsigncode
 ============
 
+## BUILD STATUS
+
+[![CI](https://github.com/mtrojnar/osslsigncode/actions/workflows/ci.yml/badge.svg)](https://github.com/mtrojnar/osslsigncode/actions/workflows/ci.yml)
+
 ## WHAT IS IT?
 
 osslsigncode is a small tool that implements part of the functionality
@@ -19,27 +23,60 @@ tool  would fail. And, so, osslsigncode was born.
 
 ## WHAT CAN IT DO?
 
-It can sign and timestamp PE (EXE/SYS/DLL/etc), CAB and MSI files. It supports
-the equivalent of signtool.exe's "-j javasign.dll -jp low", i.e. add a
-valid signature for a CAB file containing Java files. It supports getting
-the timestamp through a proxy as well. It also supports signature verification,
-removal and extraction.
+It can sign and timestamp PE (EXE/SYS/DLL/etc), CAB, CAT and MSI files.
+It supports the equivalent of signtool.exe's "-j javasign.dll -jp low",
+i.e. add a valid signature for a CAB file containing Java files.
+It supports getting the timestamp through a proxy as well. It also
+supports signature verification, removal and extraction.
 
 ## BUILDING
 
-This build technique works on Linux and macOS, if you have the necessary tools installed:
-```
-  ./autogen.sh
-  ./configure
-  make
-  make install
-```
+This section covers building osslsigncode for [Unix-like](https://en.wikipedia.org/wiki/Unix-like) operating systems.
+See [INSTALL.W32.md](https://github.com/mtrojnar/osslsigncode/blob/master/INSTALL.W32.md) for Windows notes.
+We highly recommend downloading a [release tarball](https://github.com/mtrojnar/osslsigncode/releases) instead of cloning from a git repository.
 
-* On Linux, (tested on Debian/Ubuntu) you may need `sudo apt-get update && sudo apt-get install build-essential autoconf libtool libssl-dev python3-pkgconfig libcurl4-gnutls-dev`
-* On macOS with Homebrew, you probably need to do these things before autogen.sh and configure:
+### Configure, build, make tests and install osslsigncode
+
+* Install prerequisites on a Debian-based distributions, such as Ubuntu:
 ```
-  brew install openssl@1.1 automake pkg-config libtool
+  sudo apt update && sudo apt install cmake libssl-dev libcurl4-openssl-dev
+```
+* Install prerequisites on macOS with Homebrew:
+```
+  brew install cmake pkg-config openssl@1.1
   export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
+```
+**NOTE:** osslsigncode requires CMake 3.6 or newer.
+
+You may need to use `cmake3` instead of `cmake` to complete the following steps on your system.
+* Navigate to the build directory and run CMake to configure the osslsigncode project
+  and generate a native build system:
+```
+  mkdir build && cd build && cmake -S ..
+```
+  with specific compile options:
+```
+  -DCMAKE_BUILD_TYPE=Debug
+  -DCMAKE_C_COMPILER=clang
+  -DCMAKE_PREFIX_PATH=[openssl directory];[curl directory]
+  -DCMAKE_INSTALL_PREFIX=[installation directory]
+
+```
+* Then call that build system to actually compile/link the osslsigncode project (alias `make`):
+```
+  cmake --build .
+```
+* Make test:
+```
+  ctest -C Release
+```
+* Make install:
+```
+  sudo cmake --install .
+```
+* Make tarball (simulate autotools' `make dist`):
+```
+  cmake --build . --target package_source
 ```
 
 ## USAGE
@@ -75,7 +112,7 @@ or if you want to add a timestamp as well:
 ```
   osslsigncode sign -certs <cert-file> -key <key-file> \
     -n "Your Application" -i http://www.yourwebsite.com/ \
-    -t http://timestamp.verisign.com/scripts/timstamp.dll \
+    -t http://timestamp.digicert.com \
     -in yourapp.exe -out yourapp-signed.exe
 ```
 You can use a certificate and key stored in a PKCS#12 container:
@@ -99,11 +136,10 @@ An example of using osslsigncode with SoftHSM:
   osslsigncode sign \
     -pkcs11engine /usr/lib64/engines-1.1/pkcs11.so \
     -pkcs11module /usr/lib64/pkcs11/libsofthsm2.so \
-    -certs <cert-file> \
+    -pkcs11cert 'pkcs11:token=softhsm-token;object=cert' \
     -key 'pkcs11:token=softhsm-token;object=key' \
     -in yourapp.exe -out yourapp-signed.exe
 ```
-osslsigncode currently does not support reading certificates from engines.
 
 You can check that the signed file is correct by right-clicking
 on it in Windows and choose Properties --> Digital Signatures,
@@ -111,41 +147,42 @@ and then choose the signature from the list, and click on
 Details. You should then be presented with a dialog that says
 amongst other things that "This digital signature is OK".
 
-## CONVERTING FROM PVK TO DER
+## UNAUTHENTICATED BLOBS
 
-(This guide was written by Ryan Rubley)
+The "-addUnauthenticatedBlob" parameter adds a 1024-byte unauthenticated blob
+of data to the signature in the same area as the timestamp.  This can be used
+while signing, while timestamping, after a file has been code signed, or by
+itself.  This technique (but not this project) is used by Dropbox, GoToMeeting,
+and Summit Route.
 
-If you've managed to finally find osslsigncode from some searches,
-you're most likely going to have a heck of a time getting your SPC
-and PVK files into the formats osslsigncode wants.
+### Example 1. Sign and add blob to unsigned file
 
-On the computer where you originally purchased your certificate, you
-probably had to use IE to get it. Run IE and select Tools/Internet
-Options from the menu, then under the Content tab, click the Certificates
-button. Under the Personal tab, select your certificate and click the
-Export button. On the second page of the wizard, select the PKCS #7
-Certificate (.P7B) format. This file you export as a *.p7b is what you
-use instead of your *.spc file. It's the same basic thing, in a different format.
-
-For your PVK file, you will need to download a little utility called
-PVK.EXE. This can currently be downloaded at
-
-  http://support.globalsign.net/en/objectsign/PVK.zip
-
-Run:
-```
-  pvk -in foo.pvk -nocrypt -out foo.pem
+```shell
+osslsigncode sign -addUnauthenticatedBlob -pkcs12 yourcert.pfx -pass your_password -n "Your Company" -i https://YourSite.com/ -in srepp.msi -out srepp_added.msi
 ```
 
-This will convert your PVK file to a PEM file.
-From there, you can copy the PEM file to a Linux box, and run:
-```
-  openssl rsa -outform der -in foo.pem -out foo.der
-```
-This will convert your PEM file to a DER file.
+### Example 2. Timestamp and add blob to signed file
 
-You need the *.p7b and *.der files to use osslsigncode, instead of your
-*.spc and *.pvk files.
+```shell
+osslsigncode.exe add -addUnauthenticatedBlob -t http://timestamp.digicert.com -in your_signed_file.exe -out out.exe
+```
+
+### Example 3. Add blob to signed and time-stamped file
+
+```shell
+osslsigncode.exe add -addUnauthenticatedBlob -in your_signed_file.exe -out out.exe
+```
+
+### WARNING
+
+This feature allows for doing dumb things.  Be very careful with what you put
+in the unauthenticated blob, as an attacker could modify this.  Do NOT, under
+any circumstances, put a URL here that you will use to download an additional
+file.  If you do do that, you would need to check the newly downloaded file is
+code signed AND that it has been signed with your cert AND that it is the
+version you expect.  You should consider using asymmetrical encryption for the
+data you put in the blob, such that the executable contains the public key to
+decrypt the data.  Basically, be VERY careful.
 
 ## BUGS, QUESTIONS etc.
 
