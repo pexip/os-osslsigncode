@@ -1,0 +1,102 @@
+commit 7aca21b4814f1d9a8318cc601cf5257dccdd328e
+Author: olszomal <Malgorzata.Olszowka@stunnel.org>
+Date:   Tue Sep 20 10:50:28 2022 +0200
+
+    Use big/little-endian conversion.
+    Improve checksum calculation.
+
+--- a/msi.c
++++ b/msi.c
+@@ -34,7 +34,7 @@
+ 	const u_char *address;
+ 
+ 	if (fatSectorNumber < DIFAT_IN_HEADER) {
+-		return msi->m_hdr->headerDIFAT[fatSectorNumber];
++		return LE_UINT32(msi->m_hdr->headerDIFAT[fatSectorNumber]);
+ 	} else {
+ 		fatSectorNumber -= DIFAT_IN_HEADER;
+ 		entriesPerSector = msi->m_sectorSize / 4 - 1;
+--- a/msi.h
++++ b/msi.h
+@@ -103,6 +103,40 @@
+ #define SIZE_64K 65536			/* 2^16 */
+ #define SIZE_16M 16777216		/* 2^24 */
+ 
++/*
++ * Macro names:
++ * linux:  __BYTE_ORDER == __LITTLE_ENDIAN | __BIG_ENDIAN
++ *           BYTE_ORDER == LITTLE_ENDIAN | BIG_ENDIAN
++ * bsd:     _BYTE_ORDER == _LITTLE_ENDIAN | _BIG_ENDIAN
++ *           BYTE_ORDER == LITTLE_ENDIAN | BIG_ENDIAN
++ * solaris: _LITTLE_ENDIAN | _BIG_ENDIAN
++ */
++
++#ifndef BYTE_ORDER
++#define LITTLE_ENDIAN    1234
++#define BIG_ENDIAN       4321
++#define BYTE_ORDER       LITTLE_ENDIAN
++#endif /* BYTE_ORDER */
++
++#if !defined(BYTE_ORDER) || !defined(LITTLE_ENDIAN) || !defined(BIG_ENDIAN)
++#error "Cannot determine the endian-ness of this platform"
++#endif
++
++#define LOWORD(x) (x & 0xFFFF)
++#define HIWORD(x) (x >> 16)
++
++#if BYTE_ORDER == BIG_ENDIAN
++#define LE_UINT16(x) ((((x) >> 8) & 0x00FF) | \
++                     (((x) << 8) & 0xFF00))
++#define LE_UINT32(x) (((x) >> 24) | \
++                     (((x) & 0x00FF0000) >> 8) | \
++                     (((x) & 0x0000FF00) << 8) | \
++                     ((x) << 24))
++#else
++#define LE_UINT16(x) (x)
++#define LE_UINT32(x) (x)
++#endif /* BYTE_ORDER == BIG_ENDIAN */
++
+ typedef unsigned char u_char;
+ 
+ typedef struct {
+--- a/osslsigncode.c
++++ b/osslsigncode.c
+@@ -1813,9 +1813,13 @@
+ 	return 1; /* OK */
+ }
+ 
++/*
++ * A signed PE file is padded (with 0's) to 8 byte boundary.
++ * Ignore any last odd byte in an unsigned file.
++ */
+ static uint32_t pe_calc_checksum(BIO *bio, FILE_HEADER *header)
+ {
+-	uint32_t checkSum = 0, size = 0;
++	uint32_t checkSum = 0, offset = 0;
+ 	int nread;
+ 	unsigned short *buf = OPENSSL_malloc(SIZE_64K);
+ 
+@@ -1825,17 +1829,17 @@
+ 		unsigned short val;
+ 		int i;
+ 		for (i = 0; i < nread / 2; i++) {
+-			val = buf[i];
+-			if (size == header->header_size + 88 || size == header->header_size + 90)
++			val = LE_UINT16(buf[i]);
++			if (offset == header->header_size + 88 || offset == header->header_size + 90)
+ 				val = 0;
+ 			checkSum += val;
+-			checkSum = 0xffff & (checkSum + (checkSum >> 0x10));
+-			size += 2;
++			checkSum = LOWORD(LOWORD(checkSum) + HIWORD(checkSum));
++			offset += 2;
+ 		}
+ 	}
+ 	OPENSSL_free(buf);
+-	checkSum = 0xffff & (checkSum + (checkSum >> 0x10));
+-	checkSum += size;
++	checkSum = LOWORD(LOWORD(checkSum) + HIWORD(checkSum));
++	checkSum += offset;
+ 	return checkSum;
+ }
+ 

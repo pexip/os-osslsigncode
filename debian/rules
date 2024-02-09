@@ -4,3 +4,8 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 %:
 	dh $@
+
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	cd obj-*/ && ctest -C Release || ctest -C Release --rerun-failed --output-on-failure
+endif
