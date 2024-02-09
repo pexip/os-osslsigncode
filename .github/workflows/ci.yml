@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+  version: osslsigncode-2.5
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ubuntu-22.04
+            triplet: x64-linux
+            compiler: gcc
+            os: ubuntu-22.04
+            generator: Unix Makefiles
+            vcpkg_root:
+          - id: ubuntu-20.04
+            triplet: x64-linux
+            compiler: gcc
+            os: ubuntu-20.04
+            generator: Unix Makefiles
+            vcpkg_root:
+          - id: ubuntu-18.04
+            triplet: x64-linux
+            compiler: gcc
+            os: ubuntu-18.04
+            generator: Unix Makefiles
+            vcpkg_root:
+          - id: macOS
+            triplet: x64-osx
+            compiler: clang
+            os: macOS-latest
+            generator: Unix Makefiles
+            vcpkg_root: /usr/local/share/vcpkg
+            cache: /Users/runner/.cache/vcpkg/archives
+          - id: windows-x64-vs
+            triplet: x64-windows
+            compiler: vs
+            arch: x64
+            os: windows-latest
+            generator: Ninja
+            vcpkg_root: C:/vcpkg
+            cache: C:/Users/runneradmin/AppData/Local/vcpkg/archives
+          - id: windows-x86-vs
+            triplet: x86-windows
+            compiler: vs
+            arch: x86
+            os: windows-latest
+            generator: Ninja
+            vcpkg_root: C:/vcpkg
+            cache: C:/Users/runneradmin/AppData/Local/vcpkg/archives
+          - id: windows-x64-static-vs
+            triplet: x64-windows-static
+            compiler: vs
+            arch: x64
+            os: windows-latest
+            generator: Ninja
+            vcpkg_root: C:/vcpkg
+            cache: C:/Users/runneradmin/AppData/Local/vcpkg/archives
+          - id: windows-x64-mingw
+            triplet: x64-windows
+            compiler: mingw
+            os: windows-latest
+            generator: Ninja
+            vcpkg_root: C:/vcpkg
+            cache: C:/Users/runneradmin/AppData/Local/vcpkg/archives
+
+    runs-on: ${{matrix.os}}
+
+    env:
+      VCPKG_ROOT: ${{matrix.vcpkg_root}}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Cache the vcpkg archives
+      if: matrix.cache != ''
+      uses: actions/cache@v3
+      with:
+        path: ${{matrix.cache}}
+        key: ${{matrix.id}}-${{hashFiles('vcpkg.json')}}
+        restore-keys: |
+          ${{matrix.id}}-${{hashFiles('vcpkg.json')}}
+          ${{matrix.id}}-
+
+    - name: Configure Visual Studio
+      if: matrix.compiler == 'vs'
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: ${{matrix.arch}}
+
+    - name: Install apt dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: sudo apt-get install -y libssl-dev libcurl4-openssl-dev faketime
+
+    - name: Setup the oldest supported version of cmake (macOS)
+      if: runner.os == 'macOS'
+      uses: jwlawson/actions-setup-cmake@v1.12
+      with:
+        cmake-version: '3.17.0'
+
+    - name: Show OpenSSL version
+      run: openssl version -a
+
+    - name: Configure CMake
+      run: cmake
+        -G "${{matrix.generator}}"
+        -S ${{github.workspace}}
+        -B ${{github.workspace}}/build
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist
+        -DVCPKG_TARGET_TRIPLET=${{matrix.triplet}}
+
+    - name: Build
+      run: cmake
+        --build ${{github.workspace}}/build
+        --config ${{env.BUILD_TYPE}}
+
+    - name: List files (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: find .. -ls
+
+    - name: List files (Windows)
+      if: runner.os == 'Windows'
+      run: Get-ChildItem -Recurse -Name ..
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{env.BUILD_TYPE}}
+
+    - name: Upload the errors
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: errors-${{matrix.id}}
+        path: ${{github.workspace}}/build/Testing/Temporary/LastTest.log
+
+    - name: Install
+      run: cmake --install ${{github.workspace}}/build
+
+    - name: Upload the executables
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{env.version}}-${{matrix.id}}
+        path: ${{github.workspace}}/dist
