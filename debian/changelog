@@ -1,10 +1,13 @@
 osslsigncode (2.5-4pexip1) pexip; urgency=medium
 
   * Prepare Pexip packaging
-  * Add ability into new version to read passphrase from stdin, using
-    "-readpass -"
+  * Add patches:
+    + Re-add ability into new version to read passphrase from stdin,
+      using "-readpass -"
+    + Fix a segmentation fault when signing with hardware token via
+      pkcs11
 
- -- Steve McIntyre <steve.mcintyre@pexip.com>  Fri, 09 Feb 2024 17:59:12 +0000
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Mon, 12 Feb 2024 10:27:54 +0000
 
 osslsigncode (2.5-4) unstable; urgency=medium
 

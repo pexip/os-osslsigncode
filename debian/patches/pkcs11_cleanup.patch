@@ -1,0 +1,32 @@
+Fix a segmentation fault when signing with hardware token via pkcs11
+See https://github.com/mtrojnar/osslsigncode/issues/316
+
+diff --git a/osslsigncode.c b/osslsigncode.c
+index ad83330..63cdc30 100644
+--- a/osslsigncode.c
++++ b/osslsigncode.c
+@@ -5227,8 +5227,6 @@ static int read_token(GLOBAL_OPTIONS *options, ENGINE *engine, CRYPTO_PARAMS *cp
+ 	}
+ 
+ 	cparams->pkey = ENGINE_load_private_key(engine, options->keyfile, NULL, NULL);
+-	/* Free the functional reference from ENGINE_init */
+-	ENGINE_finish(engine);
+ 	if (!cparams->pkey) {
+ 		printf("Failed to load private key %s\n", options->keyfile);
+ 		return 0; /* FAILED */
+@@ -6160,6 +6158,15 @@ skip_signing:
+ 		 */
+ 	}
+ 
++	if((options.p11engine) || (options.p11module)){
++		ENGINE* engine = pkcs11_engine();
++		if(!engine)
++			engine = dynamic_engine(&options);
++		if(engine){
++			ENGINE_finish(engine);
++		}
++	}
++
+ err_cleanup:
+ 	if (cmd != CMD_ADD)
+ 		PKCS7_free(cursig);

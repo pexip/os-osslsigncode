@@ -3,3 +3,4 @@ big-little-endian.patch
 legacy-pkcs12-support.patch
 legacy-pkcs12-tests.patch
 stdin-passphrase.patch
+pkcs11_cleanup.patch
