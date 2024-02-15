@@ -1,4 +1,4 @@
-osslsigncode (2.5-4pexip1) pexip; urgency=medium
+osslsigncode (2.5-4pexip1) pexip-fileserver; urgency=medium
 
   * Prepare Pexip packaging
   * Add patches:
@@ -6,8 +6,10 @@ osslsigncode (2.5-4pexip1) pexip; urgency=medium
       using "-readpass -"
     + Fix a segmentation fault when signing with hardware token via
       pkcs11
+  * *Not* using the new +pexip24XXX versioning, cannot be built
+    against PexOS libs. Built locally in a Debian bookworm chroot.
 
- -- Steve McIntyre <steve.mcintyre@pexip.com>  Mon, 12 Feb 2024 10:27:54 +0000
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Thu, 15 Feb 2024 16:05:40 +0000
 
 osslsigncode (2.5-4) unstable; urgency=medium
 
